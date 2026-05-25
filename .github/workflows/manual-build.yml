@@ -39,7 +39,7 @@ jobs:
       - name: 修复脚本权限
         run: |
           set -euxo pipefail
-          chmod +x config/check-*.sh scripts/feeds scripts/*.sh scripts/*.pl scripts/config.guess
+          chmod +x config/check-*.sh scripts/feeds scripts/*.sh scripts/*.pl scripts/config.guess scripts/config/*.sh scripts/ipkg-* scripts/*-package.sh
 
       - name: 安装依赖
         run: |
@@ -87,13 +87,21 @@ jobs:
           set -euxo pipefail
           make download -j"$(nproc)"
 
+      - name: 编译前检查
+        run: |
+          set -euxo pipefail
+          test -x scripts/ipkg-remove
+          test -x scripts/ipkg-build
+          test -x scripts/clean-package.sh
+          ls -l scripts/ipkg-remove scripts/ipkg-build scripts/clean-package.sh
+
       - name: 编译固件
         run: |
           set -euxo pipefail
           make -j"$(nproc)" || {
             status=$?
-            echo "Parallel build failed with status ${status}; rerunning util-linux with verbose single-thread output"
-            make -j1 V=s package/utils/util-linux/compile
+            echo "Parallel build failed with status ${status}; rerunning full build with verbose single-thread output"
+            make -j1 V=s
             exit ${status}
           }
 
