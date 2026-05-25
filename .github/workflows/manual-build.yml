@@ -90,7 +90,12 @@ jobs:
       - name: 编译固件
         run: |
           set -euxo pipefail
-          make -j"$(nproc)"
+          make -j"$(nproc)" || {
+            status=$?
+            echo "Parallel build failed with status ${status}; rerunning util-linux with verbose single-thread output"
+            make -j1 V=s package/utils/util-linux/compile
+            exit ${status}
+          }
 
       - name: 上传产物
         uses: actions/upload-artifact@v4
